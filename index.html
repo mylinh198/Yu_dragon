@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>祐のドラゴン</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one phone-width column. Name plate and growth track on top, a toy-like diorama scene,
+   a dialogue box, three care meters, then four chunky action buttons. Single pastel world by choice. */
+:root{
+  --bg:#DDF2EA; --card:#FFFFFF; --ink:#2B3550; --ink-soft:#5E6B88; --line:#BFE0D4;
+  --feed:#FF8466; --feed-d:#D8553A;
+  --pet:#FF8FB5; --pet-d:#D95C8A;
+  --bath:#45BBE8; --bath-d:#2287B5;
+  --walk:#5FBE66; --walk-d:#3A8C41;
+  --gold:#F6C453; --warn:#FF6B5E; --dc:#8FE3CC; --monkey:#B87A45;
+  --f-display:"Mochiy Pop One","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  --f-body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(circle at 12% 0%,#ffffffcc 0,transparent 38%),radial-gradient(circle at 100% 40%,#c8ebdd 0,transparent 42%);
+  color:var(--ink);font-family:var(--f-body);font-weight:500;font-size:15px;line-height:1.5;
+  padding-block:14px 30px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  min-height:100%;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.dragon:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.app{max-width:440px;margin:0 auto;display:grid;gap:12px}
+
+/* HUD */
+.plate{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:24px;padding:10px 16px;box-shadow:0 4px 0 var(--line)}
+.plate .who{min-width:0;flex:1;user-select:none;-webkit-user-select:none}
+.name{font-family:var(--f-display);font-size:19px;line-height:1.25;white-space:nowrap}
+.stagename{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);font-weight:700}
+.stagename i{width:10px;height:10px;border-radius:50%;background:var(--dc);box-shadow:inset -2px -2px 0 #0002}
+.age{font-family:var(--f-display);font-size:38px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.age small{font-size:17px;margin-left:2px}
+.love{font-size:12px;font-weight:700;color:var(--pet-d);text-align:right;white-space:nowrap}
+.growth{background:var(--card);border-radius:20px;padding:10px 16px 12px;box-shadow:0 4px 0 var(--line);display:grid;gap:7px}
+.count{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+.count b{font-family:var(--f-display);font-weight:400;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+.track{position:relative;height:14px;border-radius:99px;background:#E6F1EC;box-shadow:inset 0 2px 0 #0000000d}
+.track .fill{position:absolute;inset:0 auto 0 0;border-radius:99px;background:linear-gradient(90deg,#8FE3CC,#6FD6DD 25%,#68B4F0 50%,#7A93EE 75%,#9585EA);min-width:14px}
+.track .tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.95}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);font-weight:700;font-variant-numeric:tabular-nums}
+.preview-banner{background:var(--ink);color:#fff;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;text-align:center}
+
+/* Scene */
+.scene{position:relative;aspect-ratio:360/380;border-radius:32px;overflow:hidden;overflow:clip;isolation:isolate;background:#CFEEE6;box-shadow:0 6px 0 var(--line),inset 0 0 0 4px #fff;--dw:40%}
+.layer{position:absolute;inset:0;overflow:hidden;overflow:clip;opacity:0;transition:opacity .55s ease;pointer-events:none}
+.layer.on{opacity:1}
+.layer>svg{width:100%;height:100%;display:block}
+.loop{position:absolute;inset:0 auto 0 0;width:200%;display:flex;animation:slide var(--t,10s) linear infinite;animation-play-state:paused}
+.loop>svg{width:50%;height:100%;flex:none;display:block}
+.s-walk .loop{animation-play-state:running}
+.s-walk .clouds{animation-play-state:running}
+.clouds{animation-play-state:running}
+@keyframes slide{to{transform:translateX(-50%)}}
+.fg{z-index:2}
+.actor{position:absolute}
+.monkey{left:1%;bottom:4%;width:38%;z-index:3;pointer-events:none}
+.monkey svg,.dragon svg{display:block;width:100%;height:auto;overflow:visible}
+.dragon{right:3%;bottom:4%;width:var(--dw);z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:width .8s ease}
+.s-bath .dragon{bottom:25%;right:5%}
+.s-bath .monkey{bottom:6%}
+.is-egg .dragon{width:34%;right:12%;bottom:6%}
+.fxl{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden;overflow:clip}
+.fx{position:absolute;transform:translate(-50%,-50%);pointer-events:none;line-height:0}
+.fx.heart{animation:rise 1.5s ease-out forwards}
+.fx.bub{animation:rise 2.1s ease-in forwards}
+.fx.star{animation:pop 1.3s ease-out forwards}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}15%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),-230%) scale(1.15)}}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(0)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(40deg)}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% - 40px)) scale(.6) rotate(120deg)}}
+.d-all{transform-origin:120px 224px;animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.02,.975)}}
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+.d-wr,.d-wl{animation:flap 2.8s ease-in-out infinite}
+.d-wl{animation-delay:.05s}
+@keyframes flap{50%{transform:rotate(-7deg)}}
+.d-wl{animation-name:flapl}
+@keyframes flapl{50%{transform:rotate(7deg)}}
+.d-arm-l{transform-origin:72px 150px;transition:transform .35s}
+.d-arm-r{transform-origin:168px 150px;transition:transform .35s}
+.pose-feed .d-arm-r{transform:rotate(140deg)}
+.pose-feed .d-arm-l{transform:rotate(-140deg)}
+.pose-pet .d-arm-r{transform:rotate(105deg)}
+.pose-pet .d-arm-l{transform:rotate(-105deg)}
+.pose-bath .d-arm-r{animation:splashr .5s ease-in-out infinite alternate}
+.pose-bath .d-arm-l{animation:splashl .5s ease-in-out infinite alternate .15s}
+.pose-walk .d-arm-r{animation:splashr .45s ease-in-out infinite alternate}
+.pose-walk .d-arm-l{animation:splashl .45s ease-in-out infinite alternate}
+.pose-cheer .d-arm-r{transform:rotate(-150deg);animation:wave .5s ease-in-out infinite alternate}
+.pose-cheer .d-arm-l{transform:rotate(150deg);animation:wavel .5s ease-in-out infinite alternate}
+@keyframes splashr{from{transform:rotate(-20deg)}to{transform:rotate(-70deg)}}
+@keyframes splashl{from{transform:rotate(20deg)}to{transform:rotate(70deg)}}
+@keyframes wave{from{transform:rotate(-140deg)}to{transform:rotate(-170deg)}}
+@keyframes wavel{from{transform:rotate(140deg)}to{transform:rotate(170deg)}}
+.pose-feed .mouth,.pose-eat .mouth{transform-box:fill-box;transform-origin:center;animation:chew .32s ease-in-out infinite alternate}
+@keyframes chew{from{transform:scaleY(.55)}to{transform:scaleY(1.05)}}
+.s-walk .dragon .art,.s-walk .monkey .art{animation:hop .5s ease-in-out infinite alternate}
+.s-walk .monkey .art{animation-delay:.12s}
+@keyframes hop{from{transform:translateY(0)}to{transform:translateY(-4%)}}
+.bounce .art{animation:bounce .5s ease-out}
+@keyframes bounce{30%{transform:scale(1.07,.92)}60%{transform:scale(.96,1.06)}}
+.wobble .art{animation:wobble .5s ease-in-out}
+@keyframes wobble{20%{transform:rotate(-7deg)}45%{transform:rotate(6deg)}70%{transform:rotate(-3deg)}}
+.m-all{transform-origin:80px 226px;animation:mbob 2.6s ease-in-out infinite}
+@keyframes mbob{50%{transform:translateY(-2px) scale(1.01,.99)}}
+.m-arm-l{transform-origin:52px 148px;transition:transform .35s}
+.m-arm-r{transform-origin:108px 148px;transition:transform .35s}
+.mp-feed .m-arm-r{transform:rotate(-80deg)}
+.mp-pet .m-arm-r{transform:rotate(-150deg);animation:pat .5s ease-in-out infinite alternate}
+@keyframes pat{from{transform:rotate(-140deg)}to{transform:rotate(-165deg)}}
+.mp-bath .m-arm-r{transform:rotate(-95deg);animation:scrub .35s ease-in-out infinite alternate}
+@keyframes scrub{from{transform:rotate(-80deg)}to{transform:rotate(-110deg)}}
+.mp-walk .m-arm-r{transform:rotate(-88deg)}
+.mp-cheer .m-arm-r{transform:rotate(-155deg);animation:wave .5s ease-in-out infinite alternate}
+.mp-cheer .m-arm-l{transform:rotate(155deg);animation:wavel .5s ease-in-out infinite alternate}
+
+/* Egg */
+.egg-wrap{animation:eggidle 3s ease-in-out infinite;transform-origin:50% 95%}
+@keyframes eggidle{50%{transform:rotate(1.5deg)}}
+.shell{position:absolute;width:10%;aspect-ratio:1;background:#FFF6E0;clip-path:polygon(0 100%,50% 0,100% 100%);z-index:7;pointer-events:none}
+
+/* Dialogue */
+.talk{background:var(--card);border-radius:24px;padding:12px 14px;box-shadow:0 4px 0 var(--line);min-height:104px;display:grid;gap:8px;align-content:center}
+.talk .r{display:flex;gap:10px;align-items:flex-start}
+.talk .r.pop{animation:fadeup .35s ease-out}
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}}
+.chip{flex:none;min-width:48px;text-align:center;padding:1px 10px;border-radius:99px;font-family:var(--f-display);font-size:13px;line-height:1.7;color:#fff}
+.chip.m{background:var(--monkey)}
+.chip.d{background:color-mix(in srgb,var(--dc) 55%,#2B3550)}
+.line{margin:0;min-width:0;font-weight:700;font-size:15.5px;line-height:1.55;overflow-wrap:anywhere}
+
+/* Care meters */
+.stats{background:var(--card);border-radius:20px;padding:12px 16px;box-shadow:0 4px 0 var(--line);display:grid;gap:9px}
+.m{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.bar{height:12px;border-radius:99px;background:#EDF3F0;overflow:hidden;box-shadow:inset 0 2px 0 #0000000d}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--c);transition:width .6s ease,background .3s}
+.bar.low i{background:var(--warn)}
+.meals{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink-soft);gap:8px;flex-wrap:wrap}
+.dots{display:flex;gap:6px}
+.dots b{width:16px;height:16px;border-radius:50%;background:#EDF3F0;box-shadow:inset 0 2px 0 #0000000d}
+.dots b.on{background:var(--feed);box-shadow:inset -2px -3px 0 #0002}
+
+/* Actions */
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.btn{--c:var(--feed);--cd:var(--feed-d);appearance:none;border:0;border-radius:24px;background:var(--c);color:#fff;
+  padding:12px 4px 10px;display:grid;justify-items:center;gap:4px;box-shadow:0 6px 0 var(--cd),inset 0 3px 0 #ffffff55;
+  font-family:var(--f-display);font-size:14px;transition:transform .08s,box-shadow .08s;-webkit-tap-highlight-color:transparent}
+.btn svg{width:34px;height:34px;fill:#fff}
+.btn svg .a{fill:var(--cd)}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 var(--cd),inset 0 3px 0 #ffffff55}
+.btn:disabled{filter:saturate(.5) brightness(1.04);cursor:default}
+.btn.pet{--c:var(--pet);--cd:var(--pet-d)}
+.btn.bath{--c:var(--bath);--cd:var(--bath-d)}
+.btn.walk{--c:var(--walk);--cd:var(--walk-d)}
+.egghelp{background:var(--card);border-radius:24px;padding:14px 16px;box-shadow:0 4px 0 var(--line);text-align:center;font-weight:700}
+.egghelp b{font-family:var(--f-display);font-weight:400;font-size:19px;display:block}
+.foot{font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.6}
+.msgbtn{appearance:none;border:2px solid var(--ink);background:transparent;border-radius:99px;padding:6px 14px;font-weight:700;font-size:13px}
+
+/* Birthday */
+.bday{position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow:auto;background:radial-gradient(circle at 50% 20%,#FFF6C9 0,#FFD9E6 45%,#CFE8FF 100%);
+  padding-block:max(18px,env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));animation:fadein .8s ease-out}
+@keyframes fadein{from{opacity:0}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.bd-card{position:relative;width:100%;max-width:420px;display:grid;gap:10px;justify-items:center;text-align:center}
+.bd-date{margin:0;font-size:12px;font-weight:900;letter-spacing:.14em;color:var(--ink-soft)}
+.bd-art{position:relative;width:100%;padding-top:30px;display:flex;align-items:flex-end;justify-content:center}
+.bd-art .dr{width:62%;margin-right:-6%}
+.bd-art .mk{width:32%;margin-right:-4%;z-index:2}
+.bd-art svg{display:block;width:100%;height:auto;overflow:visible}
+.bd-art .cake{position:absolute;width:40%;left:50%;bottom:-4%;transform:translateX(-50%);z-index:3}
+.bd-age{margin:0;font-family:var(--f-display);font-weight:400;font-size:84px;line-height:1;color:#FF6F9C;text-shadow:0 5px 0 #fff,0 9px 0 #f3bfd0;font-variant-numeric:tabular-nums}
+.bd-age span{font-size:38px;margin-left:4px}
+.bd-msg{margin:4px 0 0;font-family:var(--f-display);font-size:22px;line-height:1.5;text-wrap:balance}
+.bd-wish{margin:0;font-weight:700;font-size:15.5px;line-height:1.85;color:var(--ink)}
+.bd-note{margin:0;background:#ffffffb0;border-radius:18px;padding:10px 14px;font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
+.btn-main{appearance:none;border:0;border-radius:99px;background:var(--ink);color:#fff;padding:12px 28px;font-family:var(--f-display);font-size:16px;box-shadow:0 5px 0 #151b2e;margin-top:6px}
+.btn-main:active{transform:translateY(3px);box-shadow:0 2px 0 #151b2e}
+.flame{animation:flicker .6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes flicker{from{transform:scale(1,1)}to{transform:scale(.88,1.12)}}
+
+/* Preview drawer (owner only) */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-radius:24px 24px 0 0;box-shadow:0 -6px 24px #0003;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:10px;max-width:520px;margin:0 auto}
+.sheet h2{margin:0;font-size:15px}
+.sheet p{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.5}
+.sheet input[type=range]{width:100%;accent-color:var(--bath-d)}
+.sheet .row{display:flex;flex-wrap:wrap;gap:8px}
+.sheet button{appearance:none;border:2px solid var(--ink);background:#fff;border-radius:99px;padding:6px 12px;font-weight:700;font-size:12.5px}
+.sheet button.danger{border-color:var(--feed-d);color:var(--feed-d)}
+.sheet output{font-weight:900}
+
+@media (max-width:370px){
+  .btn{font-size:12.5px}.btn svg{width:30px;height:30px}.age{font-size:32px}.name{font-size:17px}.bd-age{font-size:70px}.bd-msg{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+
+<main class="app" id="app">
+  <div class="preview-banner" id="pvBanner" hidden>プレビュー中（きろくは かわりません）</div>
+
+  <header class="plate">
+    <div class="who" id="who">
+      <div class="name" id="nm">吉田 祐</div>
+      <div class="stagename"><i></i><span id="stg">たまご</span></div>
+    </div>
+    <div>
+      <div class="age" id="age"><span id="ageN">0</span><small>歳</small></div>
+      <div class="love" id="love"></div>
+    </div>
+  </header>
+
+  <section class="growth" aria-label="せいちょう">
+    <div class="count"><span id="cdLabel">38歳まで あと</span><b id="cd">--</b></div>
+    <div class="track" id="track"><div class="fill" id="fill"></div></div>
+    <div class="ends"><span>0歳</span><span id="hatchDay"></span><span>38歳 11/9</span></div>
+  </section>
+
+  <section class="scene" id="scene">
+    <div class="layer on" id="L-room"></div>
+    <div class="layer" id="L-bath"></div>
+    <div class="layer" id="L-park"></div>
+    <div class="actor monkey" id="monkey"><div class="art" id="monkeyArt"></div></div>
+    <div class="actor dragon" id="dragon" role="button" tabindex="0" aria-label="ドラゴンを つんつんする"><div class="art" id="dragonArt"></div></div>
+    <div class="layer" id="L-bathfg" style="z-index:2"></div>
+    <div class="fxl" id="fx"></div>
+  </section>
+
+  <section class="talk" id="talk" aria-live="polite">
+    <div class="r" id="tM"><span class="chip m">リン</span><p class="line"></p></div>
+    <div class="r" id="tD"><span class="chip d">祐</span><p class="line"></p></div>
+  </section>
+
+  <section class="egghelp" id="eggHelp" hidden>
+    <b>たまごを タップして あたためよう</b>
+    <span id="eggCount">0 / 5</span>
+  </section>
+
+  <section class="stats" id="stats" aria-label="おせわ">
+    <div class="m"><span>おなか</span><div class="bar" id="b-sat" style="--c:var(--feed)"><i></i></div></div>
+    <div class="m"><span>きれい</span><div class="bar" id="b-cln" style="--c:var(--bath)"><i></i></div></div>
+    <div class="m"><span>たのしさ</span><div class="bar" id="b-fun" style="--c:var(--walk)"><i></i></div></div>
+    <div class="meals"><span>きょうの ごはん</span><span class="dots" id="dots"><b></b><b></b><b></b></span><span id="streak"></span></div>
+  </section>
+
+  <nav class="actions" id="actions" aria-label="おせわ ボタン">
+    <button class="btn feed" id="a-feed" type="button">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4C20 4 28 21 27 25 26 28 6 28 5 25 4 21 12 4 16 4Z"/><rect class="a" x="10.5" y="18" width="11" height="9" rx="2.5"/></svg>ごはん</button>
+    <button class="btn pet" id="a-pet" type="button">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 28C3 19 4 7 12 7c3 0 4 3 4 3s1-3 4-3c8 0 9 12-4 21Z"/></svg>なでなで</button>
+    <button class="btn bath" id="a-bath" type="button">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="19" r="9"/><circle cx="24" cy="10" r="5.5"/><circle cx="25" cy="24" r="3.5"/><circle class="a" cx="9" cy="16" r="2.6"/></svg>おふろ</button>
+    <button class="btn walk" id="a-walk" type="button">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="21.5" rx="8.5" ry="6.5"/><circle cx="6.5" cy="13.5" r="3.2"/><circle cx="12.5" cy="8.5" r="3.2"/><circle cx="19.5" cy="8.5" r="3.2"/><circle cx="25.5" cy="13.5" r="3.2"/></svg>おさんぽ</button>
+  </nav>
+
+  <div style="text-align:center" id="msgWrap" hidden><button class="msgbtn" id="msgBtn" type="button">おたんじょうび メッセージを もういちど</button></div>
+  <p class="foot">はじめて ひらいた ひに たまごが かえります。<br>おなじ たんまつ・おなじ ブラウザで ひらいてね。</p>
+</main>
+
+<div class="bday" id="bday" hidden role="dialog" aria-modal="true" aria-labelledby="bdMsg">
+  <canvas id="confetti"></canvas>
+  <div class="bd-card">
+    <p class="bd-date">2026.11.09 0:00 JST</p>
+    <div class="bd-art" id="bdArt"></div>
+    <h2 class="bd-age" aria-hidden="true">38<span>歳</span></h2>
+    <p class="bd-msg" id="bdMsg">祐さん、<br>38歳のお誕生日<br>おめでとうございます！✨</p>
+    <p class="bd-wish">この1年が祐さんにとって<br>最高の年になりますように。<br>この世界に生まれて、私と出会ってくれて<br>本当にありがとう❤️</p>
+    <p class="bd-note" id="bdNote" hidden></p>
+    <button class="btn-main" id="bdClose" type="button">あそびにもどる</button>
+  </div>
+</div>
+
+<aside class="sheet" id="dev" hidden aria-label="Xem thử">
+  <h2>Xem thử (chỉ bạn thấy)</h2>
+  <p>Kéo thanh để xem rồng ở từng độ tuổi. Không ảnh hưởng dữ liệu thật của người chơi.</p>
+  <label for="sim" style="font-size:13px;font-weight:700">Độ lớn: <output id="simOut">0歳</output></label>
+  <input id="sim" type="range" min="0" max="1000" value="0">
+  <div class="row">
+    <button id="devNow" type="button">Về thời gian thật</button>
+    <button id="devBd" type="button">Xem màn sinh nhật</button>
+    <button id="devReset" type="button" class="danger">Chơi lại từ quả trứng</button>
+    <button id="devClose" type="button">Đóng</button>
+  </div>
+</aside>
+
+<script>
+(() => {
+'use strict';
+/* ================= 設定 ================= */
+const TARGET = new Date('2026-11-09T00:00:00+09:00').getTime();   // 日本時間 11/9 0:00
+const SENDER_NOTE = '';   // 贈り主からの一言(空なら表示しません)
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => { const A = hex(a), B = hex(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+
+/* ================= 保存 ================= */
+const KEY = 'yu-dragon-v1';
+const fresh = () => ({ v: 1, start: null, ts: Date.now(), sat: 60, cln: 90, fun: 70, love: 0, meals: {}, streak: 0, lastFull: '', bd: false });
+function load() {
+  let s = null;
+  try { s = localStorage.getItem(KEY); } catch (e) {}
+  if (!s) { try { if (window.name && window.name.indexOf('yd1:') === 0) s = window.name.slice(4); } catch (e) {} }
+  if (s) { try { const o = JSON.parse(s); if (o && o.v === 1) return Object.assign(fresh(), o); } catch (e) {} }
+  return fresh();
+}
+let G = load();
+function save() {
+  const s = JSON.stringify(G);
+  try { localStorage.setItem(KEY, s); } catch (e) {}
+  try { window.name = 'yd1:' + s; } catch (e) {}
+}
+
+/* ================= 時間 ================= */
+let sim = null;                                  // プレビュー用の仮想時刻
+const now = () => sim != null ? sim : Date.now();
+const jstDate = t => new Date(t + 9 * 3600e3);
+const dayKey = t => jstDate(t).toISOString().slice(0, 10);
+const prevDay = k => new Date(Date.parse(k + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10);
+const slotOf = t => { const h = jstDate(t).getUTCHours(); return h >= 5 && h < 10 ? 'morning' : h >= 10 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night'; };
+function progress() {
+  if (G.start == null) return 0;
+  if (G.start >= TARGET) return 1;
+  return clamp((now() - G.start) / (TARGET - G.start), 0, 1);
+}
+const ageOf = p => p >= 1 ? 38 : Math.floor(38 * p);
+const stageOf = a => a < 3 ? 0 : a < 10 ? 1 : a < 20 ? 2 : a < 32 ? 3 : 4;
+function decay() {
+  const t = Date.now(), dh = Math.max(0, (t - G.ts) / 3600e3);
+  G.ts = t;
+  G.sat = Math.max(12, G.sat - dh * 6);
+  G.cln = Math.max(12, G.cln - dh * 3);
+  G.fun = Math.max(12, G.fun - dh * 4.5);
+}
+
+/* ================= ステージ ================= */
+const STAGES = [
+  { name: 'あかちゃん期', body: ['#CFF8EC', '#8FE3CC', '#4FB89F'], wing: ['#FFD6E2', '#F3A2BD'], horn: ['#FFF6DA', '#F3D88B'], eye: '#6EDCC0', w: .5, h: 6, er: 17 },
+  { name: 'こども期', body: ['#C2F4F6', '#6FD6DD', '#33A3B8'], wing: ['#FFDDBA', '#F5A56B'], horn: ['#FFF3CF', '#F1CD73'], eye: '#5CCBE8', w: .72, h: 14, er: 15.5 },
+  { name: 'わんぱく期', body: ['#BADFFB', '#68B4F0', '#3A80CC'], wing: ['#FFC9D5', '#F0708F'], horn: ['#FFF0C2', '#EEC25A'], eye: '#7CC6FF', w: .88, h: 22, er: 14 },
+  { name: 'おとな期', body: ['#BECBFA', '#7A93EE', '#4A5FC4'], wing: ['#FFD99B', '#F0A03A'], horn: ['#FFEDB3', '#E9B947'], eye: '#9AB0FF', w: 1.0, h: 30, er: 13 },
+  { name: 'かんろく期', body: ['#D3C7FB', '#9585EA', '#5E4CC0'], wing: ['#FFE59A', '#EDB43C'], horn: ['#FFF3B8', '#E8AE2E'], eye: '#C9B8FF', w: 1.1, h: 38, er: 12 }
+];
+
+function uidFix(svg, uid, re) { return uid ? svg.replace(re, '$1' + uid + '$2') : svg; }
+
+/* ================= ドラゴンの絵 ================= */
+function dragonSVG(o) {
+  const st = o.stage, S = STAGES[st], [b1, b2, b3] = S.body, w = S.w, h = S.h, er = S.er, face = o.face || 'normal';
+  const snout = mix(b1, '#ffffff', .4), ink = '#232C42', cy = 92;
+  const eyeOpen = cx => `<g class="eye"><ellipse cx="${cx}" cy="${cy}" rx="${er}" ry="${er * 1.18}" fill="${ink}"/><ellipse cx="${cx}" cy="${cy + er * .38}" rx="${er * .74}" ry="${er * .68}" fill="${S.eye}" opacity=".85"/><circle cx="${cx - er * .36}" cy="${cy - er * .42}" r="${er * .38}" fill="#fff"/><circle cx="${cx + er * .38}" cy="${cy + er * .5}" r="${er * .17}" fill="#fff" opacity=".9"/></g>`;
+  const eyeShut = cx => `<path d="M${cx - er} ${cy + 3} Q${cx} ${cy - er * 1.2} ${cx + er} ${cy + 3}" fill="none" stroke="${ink}" stroke-width="4.5" stroke-linecap="round"/>`;
+  const shut = face === 'bliss';
+  const oh = face === 'oh';
+  let eyes = shut ? eyeShut(90) + eyeShut(150) : eyeOpen(90) + eyeOpen(150);
+  if (face === 'sad') eyes += `<ellipse cx="${90 - er * .5}" cy="${cy + er * 1.55}" rx="2.6" ry="4" fill="#8FD8FF"/>`;
+  const bw = 2.5 + st * .7;
+  let brows = '';
+  if (st >= 1) {
+    if (face === 'sad') brows = `<path d="M${90 - er} 76 L${90 + er} 68 M${150 - er} 68 L${150 + er} 76" stroke="${b3}" stroke-width="${bw}" stroke-linecap="round"/>`;
+    else if (shut || face === 'happy') brows = `<path d="M${90 - er} 70 Q90 64 ${90 + er} 70 M${150 - er} 70 Q150 64 ${150 + er} 70" fill="none" stroke="${b3}" stroke-width="${bw}" stroke-linecap="round"/>`;
+    else brows = `<path d="M${90 - er} ${st >= 2 ? 68 : 71} L${90 + er} ${st >= 2 ? 73 : 71} M${150 - er} ${st >= 2 ? 73 : 71} L${150 + er} ${st >= 2 ? 68 : 71}" stroke="${b3}" stroke-width="${bw}" stroke-linecap="round"/>`;
+  }
+  let mouth;
+  if (face === 'eat') mouth = `<g class="mouth"><ellipse cx="120" cy="130" rx="13" ry="11" fill="#7C2A40"/><ellipse cx="120" cy="136" rx="8" ry="5" fill="#FF8FA3"/></g>`;
+  else if (face === 'happy' || face === 'bliss') mouth = `<path d="M104 124 Q120 152 136 124 Z" fill="#7C2A40" stroke="#7C2A40" stroke-width="3" stroke-linejoin="round"/><ellipse cx="120" cy="136" rx="9" ry="5.5" fill="#FF8FA3"/>`;
+  else if (face === 'sad') mouth = `<path d="M107 135 Q120 123 133 135" fill="none" stroke="#6A2F3B" stroke-width="3.2" stroke-linecap="round"/>`;
+  else if (oh) mouth = `<ellipse cx="120" cy="130" rx="7" ry="8" fill="#7C2A40"/>`;
+  else mouth = `<path d="M107 127 Q113.5 136 120 129 Q126.5 136 133 127" fill="none" stroke="#6A2F3B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  const hornL = (() => {
+    const tx = 70 - h * .3, ty = 58 - h * 1.25;
+    return `M80 70 Q${tx - 7} ${(70 + ty) / 2 + 2} ${tx} ${ty} Q${tx + 24} ${(60 + ty) / 2} 106 60 Z`;
+  })();
+  const hornR = (() => {
+    const tx = 170 + h * .3, ty = 58 - h * 1.25;
+    return `M160 70 Q${tx + 7} ${(70 + ty) / 2 + 2} ${tx} ${ty} Q${tx - 24} ${(60 + ty) / 2} 134 60 Z`;
+  })();
+  const wing = side => `<g transform="translate(${side > 0 ? 156 : 84} 142) scale(${side * w} ${w})"><g class="${side > 0 ? 'd-wr' : 'd-wl'}"><path d="M0 0 C16 -36 54 -66 96 -58 C84 -48 82 -36 88 -24 C74 -28 64 -18 64 -6 C54 -12 42 -10 36 2 C26 -4 12 -2 0 0Z" fill="url(#dgW)" stroke="${S.wing[1]}" stroke-width="3" stroke-linejoin="round"/><path d="M6 -4 C30 -30 56 -44 84 -48" fill="none" stroke="${S.wing[1]}" stroke-width="2.5" opacity=".55" stroke-linecap="round"/></g></g>`;
+  const fin = (x0, sgn) => st === 0
+    ? `<ellipse cx="${x0 + sgn * 4}" cy="86" rx="9" ry="12" fill="${S.wing[0]}" stroke="${S.wing[1]}" stroke-width="2.5"/>`
+    : `<path d="M${x0} 84 Q${x0 + sgn * 30} 62 ${x0 + sgn * 32} 98 Q${x0 + sgn * 18} 114 ${x0} 108Z" fill="url(#dgW)" stroke="${S.wing[1]}" stroke-width="3" stroke-linejoin="round"/>`;
+  const extras = [];
+  if (st === 2) {
+    extras.push(`<g transform="rotate(-18 66 108)"><rect x="52" y="102" width="28" height="11" rx="4" fill="#FFE2C4" stroke="#E7B88F" stroke-width="1.5"/><rect x="61" y="102" width="10" height="11" fill="#F5C99F"/></g>`);
+    extras.push(`<path d="M76 148 Q120 172 164 148 L168 162 Q120 188 72 162 Z" fill="#FF6B6B"/><path d="M150 166 L164 192 L148 190 L140 170Z" fill="#E94F54"/><path d="M92 156 Q120 170 148 156" fill="none" stroke="#fff" stroke-width="2" opacity=".5" stroke-dasharray="4 6"/>`);
+  }
+  if (st >= 3) extras.push(`<circle cx="120" cy="58" r="${st === 4 ? 6.5 : 5.5}" fill="${st === 4 ? '#FFD34D' : '#6FE0FF'}" stroke="${st === 4 ? '#D89A1E' : '#2F9BC8'}" stroke-width="2"/><circle cx="118" cy="56" r="1.8" fill="#fff"/>`);
+  if (st === 4) {
+    extras.push(`<path d="M96 122 Q64 112 48 130 Q42 140 52 146 M144 122 Q176 112 192 130 Q198 140 188 146" fill="none" stroke="#F0BE45" stroke-width="3.2" stroke-linecap="round"/>`);
+  }
+  const hat = o.hat ? `<g transform="rotate(-9 120 50)"><path d="M90 56 L150 56 L120 -22Z" fill="#FF8FB5"/><path d="M102 30 L138 30 L146 52 L94 52Z" fill="#FFE27A" opacity=".85"/><path d="M110 8 L130 8 L134 20 L106 20Z" fill="#fff" opacity=".7"/><ellipse cx="120" cy="56" rx="32" ry="6.5" fill="#FFD34D"/><circle cx="120" cy="-24" r="8.5" fill="#FFD34D"/></g>` : '';
+  return uidFix(`<svg viewBox="-20 -34 290 276" class="pose-${o.pose || 'idle'}" aria-hidden="true">
+<defs>
+<radialGradient id="dgB" cx=".34" cy=".26" r=".9"><stop offset="0" stop-color="${b1}"/><stop offset=".55" stop-color="${b2}"/><stop offset="1" stop-color="${b3}"/></radialGradient>
+<radialGradient id="dgBe" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFFDF0"/><stop offset="1" stop-color="#FFE3A0"/></radialGradient>
+<linearGradient id="dgW" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${S.wing[0]}"/><stop offset="1" stop-color="${S.wing[1]}"/></linearGradient>
+<linearGradient id="dgHo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${S.horn[0]}"/><stop offset="1" stop-color="${S.horn[1]}"/></linearGradient>
+</defs>
+<ellipse cx="120" cy="224" rx="70" ry="10" fill="#2B3550" opacity=".17"/>
+<g class="d-all">
+<path d="M150 198 C190 216 232 198 226 152 C224 140 213 134 209 144" fill="none" stroke="${b3}" stroke-width="22" stroke-linecap="round"/>
+<path d="M150 196 C190 214 230 196 224 152 C222 142 213 138 209 146" fill="none" stroke="${b2}" stroke-width="18" stroke-linecap="round"/>
+<path d="M156 190 C190 206 220 192 218 158" fill="none" stroke="${b1}" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+<path d="M205 138 L211 118 L222 136Z" fill="url(#dgHo)" stroke="${S.horn[1]}" stroke-width="2" stroke-linejoin="round"/>
+${wing(1)}${wing(-1)}
+<ellipse cx="120" cy="160" rx="55" ry="53" fill="url(#dgB)"/>
+<ellipse cx="120" cy="170" rx="35" ry="38" fill="url(#dgBe)"/>
+<path d="M92 160 Q120 170 148 160 M90 174 Q120 185 150 174 M96 188 Q120 197 144 188" fill="none" stroke="#E5C06E" stroke-width="2" opacity=".55" stroke-linecap="round"/>
+<ellipse cx="90" cy="208" rx="23" ry="13" fill="${b2}" stroke="${b3}" stroke-width="2"/><ellipse cx="150" cy="208" rx="23" ry="13" fill="${b2}" stroke="${b3}" stroke-width="2"/>
+<g fill="${b1}" stroke="${b3}" stroke-width="1.5"><circle cx="78" cy="214" r="5"/><circle cx="90" cy="217" r="5"/><circle cx="102" cy="214" r="5"/><circle cx="138" cy="214" r="5"/><circle cx="150" cy="217" r="5"/><circle cx="162" cy="214" r="5"/></g>
+<g class="d-arm-l"><ellipse cx="68" cy="168" rx="11" ry="19" fill="${b2}" stroke="${b3}" stroke-width="2" transform="rotate(10 68 150)"/><circle cx="64" cy="186" r="9" fill="${b1}" stroke="${b3}" stroke-width="2"/></g>
+<g class="d-arm-r"><ellipse cx="172" cy="168" rx="11" ry="19" fill="${b2}" stroke="${b3}" stroke-width="2" transform="rotate(-10 172 150)"/><circle cx="176" cy="186" r="9" fill="${b1}" stroke="${b3}" stroke-width="2"/></g>
+${extras[1] || ''}
+<path d="${hornL}" fill="url(#dgHo)" stroke="${S.horn[1]}" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="${hornR}" fill="url(#dgHo)" stroke="${S.horn[1]}" stroke-width="2.5" stroke-linejoin="round"/>
+${fin(54, -1)}${fin(186, 1)}
+<ellipse cx="120" cy="96" rx="68" ry="57" fill="url(#dgB)" stroke="${b3}" stroke-width="2"/>
+<ellipse cx="86" cy="60" rx="26" ry="11" fill="#fff" opacity=".35" transform="rotate(-18 86 60)"/>
+<ellipse cx="66" cy="113" rx="12" ry="7" fill="#FF8CA6" opacity=".5"/><ellipse cx="174" cy="113" rx="12" ry="7" fill="#FF8CA6" opacity=".5"/>
+<ellipse cx="120" cy="121" rx="29" ry="20" fill="${snout}" opacity=".95"/>
+<ellipse cx="111" cy="114" rx="2.6" ry="3.6" fill="${b3}" opacity=".75"/><ellipse cx="129" cy="114" rx="2.6" ry="3.6" fill="${b3}" opacity=".75"/>
+${mouth}${eyes}${brows}
+${extras[0] || ''}${extras[2] || ''}${extras[3] || ''}
+${hat}
+</g></svg>`, o.uid, /(dg[A-Za-z]+)(["')])/g);
+}
+
+/* ================= リン(さる)の絵 ================= */
+function monkeySVG(o) {
+  const face = o.face || 'normal', fur = '#B87A45', furD = '#8E5A2E', skin = '#FFE3C4', ink = '#2A2230';
+  const eyes = face === 'happy'
+    ? `<path d="M56 88 Q64 76 72 88 M88 88 Q96 76 104 88" fill="none" stroke="${ink}" stroke-width="4" stroke-linecap="round"/>`
+    : `<g class="eye"><ellipse cx="64" cy="88" rx="8.5" ry="10.5" fill="${ink}"/><circle cx="61" cy="84" r="3.4" fill="#fff"/><circle cx="67" cy="93" r="1.6" fill="#fff"/><ellipse cx="96" cy="88" rx="8.5" ry="10.5" fill="${ink}"/><circle cx="93" cy="84" r="3.4" fill="#fff"/><circle cx="99" cy="93" r="1.6" fill="#fff"/></g><path d="M54 79 l-6 -4 M106 79 l6 -4" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/>`;
+  const mouth = face === 'happy'
+    ? `<path d="M68 108 Q80 128 92 108 Z" fill="#8E2F45" stroke="#8E2F45" stroke-width="3" stroke-linejoin="round"/><ellipse cx="80" cy="117" rx="6" ry="3.4" fill="#FF8FA3"/>`
+    : `<path d="M71 108 Q80 117 89 108" fill="none" stroke="#7A3A3A" stroke-width="3" stroke-linecap="round"/>`;
+  const arm = (cx, cls) => `<g class="${cls}"><rect x="${cx - 8}" y="144" width="16" height="42" rx="8" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/><circle cx="${cx}" cy="188" r="9.5" fill="${skin}" stroke="${furD}" stroke-width="2"/><ellipse cx="${cx}" cy="148" rx="12" ry="9" fill="#FF9DBB"/></g>`;
+  return uidFix(`<svg viewBox="0 0 160 232" class="mp-${o.pose || 'idle'}" aria-hidden="true">
+<defs>
+<radialGradient id="mkF" cx=".35" cy=".28" r=".95"><stop offset="0" stop-color="#E0A56E"/><stop offset=".6" stop-color="${fur}"/><stop offset="1" stop-color="${furD}"/></radialGradient>
+<radialGradient id="mkS" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFF4E3"/><stop offset="1" stop-color="${skin}"/></radialGradient>
+<linearGradient id="mkD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB3CB"/><stop offset="1" stop-color="#FF8FB1"/></linearGradient>
+</defs>
+<ellipse cx="80" cy="226" rx="46" ry="7" fill="#2B3550" opacity=".16"/>
+<g class="m-all">
+<path d="M116 196 C158 196 166 154 146 142" fill="none" stroke="${furD}" stroke-width="13" stroke-linecap="round"/>
+<path d="M116 194 C154 194 160 156 146 144" fill="none" stroke="${fur}" stroke-width="9" stroke-linecap="round"/>
+<ellipse cx="62" cy="216" rx="15" ry="9" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/><ellipse cx="98" cy="216" rx="15" ry="9" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/>
+<path d="M48 150 Q80 140 112 150 L122 206 Q80 220 38 206 Z" fill="url(#mkD)" stroke="#E5779C" stroke-width="2" stroke-linejoin="round"/>
+<g fill="#fff" opacity=".7"><circle cx="58" cy="176" r="4"/><circle cx="82" cy="190" r="4"/><circle cx="102" cy="170" r="4"/><circle cx="70" cy="200" r="3"/><circle cx="96" cy="200" r="3"/></g>
+<path d="M60 150 Q80 164 100 150" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+${arm(52, 'm-arm-l')}${arm(108, 'm-arm-r')}
+<g transform="translate(0 17)">
+<circle cx="26" cy="88" r="19" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/><circle cx="26" cy="88" r="10.5" fill="#FFB3A3"/>
+<circle cx="134" cy="88" r="19" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/><circle cx="134" cy="88" r="10.5" fill="#FFB3A3"/>
+<ellipse cx="80" cy="82" rx="55" ry="49" fill="url(#mkF)" stroke="${furD}" stroke-width="2"/>
+<path d="M44 86 Q42 54 66 62 Q80 68 94 62 Q118 54 116 86 Q118 124 80 126 Q42 124 44 86Z" fill="url(#mkS)"/>
+<path d="M80 36 Q68 20 80 16 Q92 14 88 28 M70 40 Q60 28 68 22" fill="none" stroke="${furD}" stroke-width="4" stroke-linecap="round"/>
+${eyes}
+<ellipse cx="50" cy="103" rx="9" ry="5.5" fill="#FF8FA6" opacity=".6"/><ellipse cx="110" cy="103" rx="9" ry="5.5" fill="#FF8FA6" opacity=".6"/>
+<ellipse cx="76" cy="99" rx="2" ry="2.6" fill="${furD}"/><ellipse cx="84" cy="99" rx="2" ry="2.6" fill="${furD}"/>
+${mouth}
+<g transform="translate(116 36) rotate(18)"><path d="M0 0 L-24 -14 L-24 14Z" fill="#FF5A7A"/><path d="M0 0 L24 -14 L24 14Z" fill="#FF5A7A"/><circle r="7" fill="#FF3F66"/><circle cx="-2" cy="-2" r="2" fill="#fff" opacity=".7"/></g></g>
+</g></svg>`, o.uid, /(mk[A-Z])(["')])/g);
+}
+
+/* ================= 食べもの・小物 ================= */
+const FOODS = [
+  `<svg viewBox="0 0 40 40" width="40" height="40"><circle cx="20" cy="23" r="14" fill="#FF5A5F"/><ellipse cx="14" cy="17" rx="4" ry="3" fill="#fff" opacity=".5"/><path d="M20 10 Q20 4 25 3" stroke="#6B4A2B" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M21 9 Q28 3 32 9 Q26 13 21 9Z" fill="#5DBB63"/></svg>`,
+  `<svg viewBox="0 0 40 40" width="40" height="40"><path d="M20 4C26 4 36 28 34 33 32 36 8 36 6 33 4 28 14 4 20 4Z" fill="#fff" stroke="#DDE3EA" stroke-width="2"/><rect x="12" y="24" width="16" height="11" rx="3" fill="#2B3A33"/></svg>`,
+  `<svg viewBox="0 0 40 40" width="40" height="40"><ellipse cx="20" cy="24" rx="16" ry="13" fill="#FFF3DC" stroke="#EBCB98" stroke-width="2"/><path d="M12 14 Q20 8 28 14" fill="none" stroke="#EBCB98" stroke-width="2" stroke-linecap="round"/><ellipse cx="14" cy="19" rx="4" ry="2.4" fill="#fff"/></svg>`
+];
+const HEART = `<svg viewBox="0 0 32 32" width="28" height="28"><path d="M16 28C4 19 5 8 12 8c3 0 4 3 4 3s1-3 4-3c7 0 8 11-4 20z" fill="#FF6F9C"/><ellipse cx="11" cy="12.5" rx="3" ry="2" fill="#fff" opacity=".65" transform="rotate(-30 11 12.5)"/></svg>`;
+const STAR = `<svg viewBox="0 0 32 32" width="26" height="26"><path d="M16 2L19.5 12.5 30 16 19.5 19.5 16 30 12.5 19.5 2 16 12.5 12.5Z" fill="#FFD23F"/></svg>`;
+const BUB = s => `<svg viewBox="0 0 20 20" width="${s}" height="${s}"><circle cx="10" cy="10" r="9" fill="#fff" fill-opacity=".35" stroke="#fff" stroke-width="1.4"/><circle cx="7" cy="7" r="2.4" fill="#fff"/></svg>`;
+const BUTTERFLY = `<svg viewBox="0 0 40 30" width="40" height="30"><g class="bf"><ellipse cx="12" cy="11" rx="10" ry="8" fill="#FF9DC7" transform="rotate(-20 12 11)"/><ellipse cx="28" cy="11" rx="10" ry="8" fill="#FFB66B" transform="rotate(20 28 11)"/><ellipse cx="13" cy="21" rx="6" ry="5" fill="#FFC6E0"/><ellipse cx="27" cy="21" rx="6" ry="5" fill="#FFD29B"/></g><rect x="19" y="6" width="2.4" height="18" rx="1.2" fill="#5A3E2B"/></svg>`;
+const FLOWER = `<svg viewBox="0 0 40 50" width="34" height="42"><rect x="18.5" y="22" width="3" height="26" fill="#4FA85A"/><g fill="#FF9DC7"><circle cx="20" cy="8" r="7"/><circle cx="31" cy="16" r="7"/><circle cx="27" cy="29" r="7"/><circle cx="13" cy="29" r="7"/><circle cx="9" cy="16" r="7"/></g><circle cx="20" cy="19" r="6.5" fill="#FFD34D"/></svg>`;
+const RAINBOW = `<svg viewBox="0 0 200 110" width="190" height="105"><g fill="none" stroke-width="9" stroke-linecap="round"><path d="M10 105 A90 90 0 0 1 190 105" stroke="#FF7B7B"/><path d="M20 105 A80 80 0 0 1 180 105" stroke="#FFB86B"/><path d="M30 105 A70 70 0 0 1 170 105" stroke="#FFE27A"/><path d="M40 105 A60 60 0 0 1 160 105" stroke="#7AD68A"/><path d="M50 105 A50 50 0 0 1 150 105" stroke="#6BB8F5"/><path d="M60 105 A40 40 0 0 1 140 105" stroke="#A58CF0"/></g></svg>`;
+
+/* ================= 背景 ================= */
+const roomSVG = `<svg viewBox="0 0 360 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+<linearGradient id="rmW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEEDD"/><stop offset="1" stop-color="#FFD8C0"/></linearGradient>
+<linearGradient id="rmF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFC595"/><stop offset="1" stop-color="#DDA66F"/></linearGradient>
+<linearGradient id="rmS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ED8FF"/><stop offset="1" stop-color="#E4F6FF"/></linearGradient>
+<pattern id="rmP" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="2.6" fill="#fff" opacity=".6"/><circle cx="22" cy="22" r="2.6" fill="#fff" opacity=".6"/></pattern></defs>
+<rect width="360" height="380" fill="url(#rmW)"/><rect width="360" height="262" fill="url(#rmP)"/>
+<path d="M0 262H360V380H0Z" fill="url(#rmF)"/>
+<g stroke="#CF9560" stroke-width="2" opacity=".7"><path d="M0 300H360M0 340H360"/><path d="M60 262L20 380M130 262L110 380M200 262L200 380M270 262L290 380M340 262L380 380"/></g>
+<rect y="252" width="360" height="12" fill="#fff"/><rect y="262" width="360" height="4" fill="#0000001a"/>
+<g><rect x="226" y="34" width="104" height="116" rx="12" fill="#fff"/><rect x="234" y="42" width="88" height="100" rx="7" fill="url(#rmS)"/>
+<ellipse cx="262" cy="74" rx="20" ry="9" fill="#fff"/><ellipse cx="276" cy="68" rx="14" ry="8" fill="#fff"/><path d="M234 126Q262 110 290 124T322 118V142H234Z" fill="#A8E3AA"/>
+<path d="M278 42V142M234 92H322" stroke="#fff" stroke-width="5"/>
+<path d="M218 30Q236 70 232 160H214Z" fill="#FFB3CB"/><path d="M338 30Q320 70 324 160H342Z" fill="#FFB3CB"/><rect x="212" y="24" width="132" height="8" rx="4" fill="#E58AA8"/></g>
+<g><rect x="132" y="48" width="64" height="76" rx="8" fill="#fff" stroke="#E5D3C3" stroke-width="2"/><path d="M132 56a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v16H132Z" fill="#FF6B6B"/>
+<circle cx="146" cy="49" r="3" fill="#fff"/><circle cx="182" cy="49" r="3" fill="#fff"/>
+<text x="164" y="66" text-anchor="middle" font-family="Mochiy Pop One,sans-serif" font-size="11" fill="#fff">11がつ</text>
+<text x="164" y="108" text-anchor="middle" font-family="Mochiy Pop One,sans-serif" font-size="34" fill="#2B3550">9</text>
+<circle cx="164" cy="98" r="22" fill="none" stroke="#FF6B8A" stroke-width="3.5" stroke-dasharray="7 4"/></g>
+<g><rect x="24" y="48" width="84" height="68" rx="8" fill="#fff" stroke="#E5D3C3" stroke-width="2"/><rect x="31" y="55" width="70" height="54" rx="4" fill="#CFF3E8"/><path d="M66 66C78 66 86 88 84 96 82 101 50 101 48 96 46 88 54 66 66 66Z" fill="#FFF6E0"/><circle cx="60" cy="84" r="3" fill="#8FE3CC"/><circle cx="73" cy="90" r="3.4" fill="#FFB3CB"/></g>
+<g><rect x="22" y="156" width="112" height="9" rx="4" fill="#C98F5A"/><rect x="34" y="132" width="22" height="24" rx="3" fill="#8FE3CC"/><rect x="58" y="140" width="20" height="16" rx="3" fill="#FFB3CB"/><rect x="84" y="126" width="26" height="30" rx="4" fill="#FFD34D"/><path d="M97 126c-6-10 0-16 0-16s6 6 0 16Z" fill="#5DBB63"/></g>
+<ellipse cx="180" cy="326" rx="156" ry="38" fill="#BFEBE0"/><ellipse cx="180" cy="326" rx="132" ry="29" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round"/></svg>`;
+
+const bathSVG = `<svg viewBox="0 0 360 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+<pattern id="btT" width="36" height="36" patternUnits="userSpaceOnUse"><rect width="36" height="36" fill="#D5F3F8"/><path d="M0 0H36V36" fill="none" stroke="#fff" stroke-width="3"/></pattern>
+<linearGradient id="btW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ADCF5"/><stop offset="1" stop-color="#6CC8EE"/></linearGradient></defs>
+<rect width="360" height="380" fill="url(#btT)"/><path d="M0 266H360V380H0Z" fill="#F7E6CB"/><path d="M0 266H360" stroke="#fff" stroke-width="8"/>
+<g stroke="#E9D1AA" stroke-width="2"><path d="M0 310H360M0 350H360M70 266L50 380M180 266V380M290 266L310 380"/></g>
+<rect x="30" y="40" width="84" height="64" rx="10" fill="#fff"/><rect x="37" y="47" width="70" height="50" rx="6" fill="#E8F8FF"/><path d="M44 80L66 62 84 76 100 66" fill="none" stroke="#BDE6F5" stroke-width="3" stroke-linecap="round"/>
+<g><rect x="150" y="60" width="14" height="30" rx="5" fill="#FF9DC7"/><rect x="154" y="52" width="6" height="8" fill="#E5779C"/><rect x="172" y="68" width="14" height="22" rx="5" fill="#FFD34D"/></g><rect x="140" y="90" width="56" height="6" rx="3" fill="#E8D5B5"/>
+<rect x="104" y="214" width="244" height="86" rx="26" fill="#BFE6F2"/><rect x="112" y="224" width="228" height="40" rx="18" fill="url(#btW)"/>
+<path d="M226 30v36" stroke="#9FB4C4" stroke-width="5"/><rect x="214" y="22" width="26" height="14" rx="7" fill="#C7D6E0"/></svg>`;
+const bathFgSVG = `<svg viewBox="0 0 360 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<path d="M100 252Q100 246 108 246H344Q352 246 352 252V316Q352 342 326 342H126Q100 342 100 316Z" fill="#fff"/>
+<path d="M100 252Q100 246 108 246H344Q352 246 352 252V268H100Z" fill="#E3F6FC"/>
+<path d="M108 300H344" stroke="#CDEBF5" stroke-width="3"/><rect x="132" y="338" width="22" height="12" rx="5" fill="#F1C453"/><rect x="298" y="338" width="22" height="12" rx="5" fill="#F1C453"/>
+<g fill="#fff" stroke="#CFEFFA" stroke-width="1.5"><circle cx="124" cy="250" r="12"/><circle cx="144" cy="244" r="15"/><circle cx="168" cy="250" r="11"/><circle cx="190" cy="243" r="14"/><circle cx="216" cy="249" r="10"/><circle cx="236" cy="244" r="13"/><circle cx="262" cy="250" r="11"/><circle cx="286" cy="244" r="15"/><circle cx="312" cy="250" r="12"/><circle cx="332" cy="246" r="9"/></g>
+<g><ellipse cx="304" cy="236" rx="15" ry="11" fill="#FFD83D"/><circle cx="314" cy="222" r="9" fill="#FFD83D"/><path d="M321 222l9 3-9 3Z" fill="#FF9440"/><circle cx="316" cy="220" r="1.8" fill="#2B3550"/></g></svg>`;
+const parkSky = `<svg viewBox="0 0 360 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="pkS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ED8FF"/><stop offset="1" stop-color="#EAF9FF"/></linearGradient></defs><rect width="360" height="380" fill="url(#pkS)"/><circle cx="300" cy="62" r="26" fill="#FFE27A"/><circle cx="300" cy="62" r="36" fill="#FFE27A" opacity=".3"/></svg>`;
+const cloudsTile = `<svg viewBox="0 0 360 380" aria-hidden="true"><g fill="#fff"><g opacity=".95"><ellipse cx="70" cy="70" rx="38" ry="14"/><ellipse cx="94" cy="60" rx="24" ry="14"/></g><g opacity=".9"><ellipse cx="230" cy="110" rx="44" ry="15"/><ellipse cx="206" cy="100" rx="22" ry="12"/></g></g></svg>`;
+const hillsTile = `<svg viewBox="0 0 360 380" aria-hidden="true"><path d="M0 238Q60 200 120 230T240 224T360 238V380H0Z" fill="#BDE8B6"/><g fill="#A4DDA0"><circle cx="70" cy="226" r="14"/><circle cx="196" cy="222" r="17"/><circle cx="300" cy="230" r="13"/></g></svg>`;
+const groundTile = `<svg viewBox="0 0 360 380" aria-hidden="true"><path d="M0 268Q90 244 180 266T360 268V380H0Z" fill="#8ED494"/><path d="M0 318H360V380H0Z" fill="#F5DFAA"/><path d="M0 318Q90 304 180 318T360 318V326H0Z" fill="#7CC884"/>
+<g><rect x="56" y="214" width="9" height="52" rx="3" fill="#A6723E"/><circle cx="60" cy="204" r="30" fill="#5DBB63"/><circle cx="50" cy="196" r="9" fill="#7FD684" opacity=".8"/></g>
+<g><rect x="262" y="226" width="8" height="42" rx="3" fill="#A6723E"/><circle cx="266" cy="216" r="25" fill="#4FA85A"/><circle cx="258" cy="209" r="7" fill="#74CF7B" opacity=".8"/></g>
+<g fill="#fff"><circle cx="120" cy="290" r="4"/><circle cx="160" cy="298" r="4"/><circle cx="324" cy="292" r="4"/></g><g fill="#FFD34D"><circle cx="120" cy="290" r="1.8"/><circle cx="160" cy="298" r="1.8"/><circle cx="324" cy="292" r="1.8"/></g><g fill="#FF9DC7"><circle cx="210" cy="296" r="4"/><circle cx="20" cy="290" r="4"/></g>
+<g fill="#E6C98A"><ellipse cx="90" cy="344" rx="8" ry="4"/><ellipse cx="190" cy="360" rx="9" ry="4"/><ellipse cx="300" cy="346" rx="8" ry="4"/><ellipse cx="30" cy="362" rx="7" ry="3.5"/></g></svg>`;
+const parkHTML = parkSky + `<div class="loop clouds" style="--t:70s;position:absolute">${cloudsTile}${cloudsTile}</div><div class="loop" style="--t:34s">${hillsTile}${hillsTile}</div><div class="loop" style="--t:11s">${groundTile}${groundTile}</div>`;
+
+/* ================= せりふ ================= */
+const MK = {
+  feed: ['はい、あーん！', 'いっぱい たべてね！', 'おいしいの あげるよ〜', 'ゆっくり かんでね！', 'きょうの ごはんは じしんさく だよ！'],
+  pet: ['いいこ、いいこ♪', 'なでなで〜', 'ふわふわで きもちいいね', 'えらいね、えらいね', 'ぎゅーって しちゃお！'],
+  bath: ['あわあわに しようね！', 'ごしごし〜', 'みみの うしろも あらうよ！', 'おゆ、あったかいかな？', 'ぴかぴかに なあれ！'],
+  walk: ['おさんぽ いこっか！', 'てを つないで いこうね', 'いい てんきだね〜', 'はしるの ひさしぶり！', 'どこへ いこうかな？'],
+  full: ['まだ おなか いっぱいみたい', 'あとで また あげようね'],
+  tired: ['おなか すいてると あるけないよね', 'さきに ごはんに しよっか'],
+  allMeals: ['きょうの ごはん ぜんぶ たべたね！えらい！', 'さんかい ぜんぶ！ごほうびの ぎゅー！'],
+  greet: { morning: 'おはよう！きょうも よろしくね', day: 'こんにちは！あいたかったよ〜', evening: 'こんばんは！きょうは おつかれさま', night: 'もう おそいね、ゆっくり しようね' },
+  eve: ['あしたは とくべつな ひ だね', 'ドキドキ してきた！']
+};
+const DR = [
+  { // 0 あかちゃん期
+    feed: ['はぐはぐ…ぴぃ！', 'んまんま！ゆう、これ すき！', 'もっと もっと〜ばぶぅ！'],
+    pet: ['きゅうん…ふにゃあ', 'えへへ、ぽかぽかぁ', 'ぴぃぴぃ♪ もっとぉ'],
+    bath: ['ぶくぶく…ぴゃっ！', 'あわあわ、くすぐったいぴぃ', 'ぱしゃぱしゃ！たのしー！'],
+    walk: ['てくてく…ころん！', 'おそと！おそと！ぴぃ！', 'ちょうちょ！まってぇ〜'],
+    idle: ['ぴぃ？', '……ふわぁ（あくび）', 'リン〜、リン〜！', 'しっぽ つかまえた！…あれ？'],
+    hungry: ['おなか ぺこぺこ…ぴぃぃ', 'ごはん〜…ごはんぅ〜'],
+    dirty: ['なんか… ちょっと くさいぴ？', 'どろんこ…ふぇぇ'],
+    bored: ['あそんでぇ…ぴぃ', 'ひまぁ〜…ごろん'],
+    full: ['もう おなか ぽんぽん…ぷぅ', 'おなか いっぱい、ねむい…'],
+    tap: ['ぴゃっ！くすぐったい！', 'つんつん、や〜！', 'えへ、なぁに？'],
+    greet: { morning: 'ぴぃ！おはよぉ！', day: 'あ！リンだぁ！ぴぃ！', evening: 'こんばんぴぃ…', night: 'ねむねむ…ぴぃ…' },
+    eve: ['あしたは なにか あるのぴ？']
+  },
+  { // 1 こども期
+    feed: ['いただきまーす！もぐもぐ！', 'おいしい！ぼく、ぜんぶ たべちゃう！', 'ほっぺが おちそう〜！'],
+    pet: ['えへへ、そこそこ！きもちいい〜', 'もっと なでて！もっと！', 'リンの て、あったかいね'],
+    bath: ['ざぶーん！ぼく、およげるよ！', 'あわで ひげ つくっちゃお！', 'ぷくぷく〜！あひるさんも いっしょだね'],
+    walk: ['おさんぽ だいすき！はしろー！', 'みて みて！ぼく、ジャンプ できるよ！', 'きょうは どこまで いく？'],
+    idle: ['ねえねえ、きいて きいて！', 'ぼくね、はやく おおきく なりたいんだ', 'しっぽ ふりふり〜', 'あっ！いま つばさが ちょっと うごいたよ！'],
+    hungry: ['おなか すいたよぉ…ぐ〜', 'ごはん まだかな…'],
+    dirty: ['ぼく、ちょっと よごれちゃった…', 'おふろ はいりたいな〜'],
+    bored: ['ねえ、あそぼうよ〜', 'つまんなーい！なにかしよ？'],
+    full: ['もう はいらないよ〜ぽんぽん！', 'おなか いっぱい！ありがとう！'],
+    tap: ['わっ、びっくりした！', 'なになに？あそぶ？', 'こちょこちょは だめだよ〜！'],
+    greet: { morning: 'おはよう、リン！きょうも げんきだよ！', day: 'リン！まってたよ！', evening: 'こんばんは！きょうは なにして あそぶ？', night: 'ふぁ…もう ねむいよ…' },
+    eve: ['あしたって なんの ひ なの？']
+  },
+  { // 2 わんぱく期
+    feed: ['うまっ！おかわりだぜ！', 'がつがつ…！これ、さいこうじゃん！', 'リンの ごはん、いちばんだな！'],
+    pet: ['べ、べつに うれしくなんか… …もっと やっていいぞ', 'ちぇっ、てれるじゃんかよ〜', 'へへっ、そこ きもちいいぜ'],
+    bath: ['ざぱーん！オレが いちばん のりだぜ！', 'あわあわ ヘアスタイル、きまったか？', 'おゆが ちょうど いいな〜'],
+    walk: ['きょうは オレに ついてこいよ！', 'きょうそう しようぜ！まけないぞ！', 'あの やままで ダッシュだ！'],
+    idle: ['オレ、もっと つよく なるぜ', 'つばさ、だいぶ おおきく なっただろ？', '…なあ リン、ひま', 'ふっふっふ、オレさまの じかんだぜ'],
+    hungry: ['はらへった〜！なんか くれよ！', 'ぐぅ〜…ちからが でねぇ…'],
+    dirty: ['うわ、オレ、どろだらけじゃん', 'ちょっと においが… おふろ たのむ'],
+    bored: ['たいくつだぜ… あそびに いこうぜ', 'うずうず してきた！'],
+    full: ['もう くえねぇ… まんぷくだぜ', 'ふぅ〜 くった くった！'],
+    tap: ['おっ、なんだよ？', 'つつくなって〜！', 'へへ、いつでも かかってこいよ！'],
+    greet: { morning: 'おう、リン！おはよう！', day: 'よっ！まってたぜ！', evening: 'おつかれ！きょうも いい いちにちだったな', night: '…ふあぁ、もう ねるか' },
+    eve: ['あしたは なんか あるんだろ？わかってるぜ']
+  },
+  { // 3 おとな期
+    feed: ['いただきます。…うん、おいしい', 'ありがとう、リン。いつも ほっとするよ', 'ごちそうさま、と いいたくなる あじだね'],
+    pet: ['ふふ、くすぐったいな。でも、わるくない', 'リンの て、おちつくよ', 'ありがとう。きょうも がんばれそうだ'],
+    bath: ['ふぅ…ごくらく ごくらく', 'いい おゆだね。つかれが とけていくよ', 'あわの なかで ゆっくり しようか'],
+    walk: ['いい かぜだね。ゆっくり あるこう', 'てくてく ならんで あるくの、すきだな', 'おおきくなって、けしきも ちがって みえるよ'],
+    idle: ['ここまで あっという まだったね', 'リンと いっしょだと、まいにち たのしいな', 'ふぅ…いい きもちだ', 'つぎは どこへ いこうか'],
+    hungry: ['そろそろ おなかが すいてきたな…', 'ぐぅ…ごはんの じかんかな'],
+    dirty: ['すこし よごれたかな。おふろ おねがいしても いい？', 'さっぱり したい きぶんだ'],
+    bored: ['たまには ふたりで おでかけ しよう', 'すこし たいくつかも…'],
+    full: ['もう じゅうぶん いただいたよ', 'ありがとう、おなか いっぱいだ'],
+    tap: ['ん？どうしたの？', 'ふふ、くすぐったいよ', 'なにか ようかな？'],
+    greet: { morning: 'おはよう、リン。いい あさだね', day: 'こんにちは、リン。まってたよ', evening: 'おかえり。きょうも おつかれさま', night: 'こんばんは。そろそろ ゆっくり しようか' },
+    eve: ['もうすぐ だいじな ひが くるね']
+  },
+  { // 4 かんろく期
+    feed: ['ふむ…この あじは、じつに いい', 'ありがたく いただこう。…おかわりは あるかな？', 'ほう、わかっているね、リン'],
+    pet: ['ふふ…こうして なでられるのも、わるくない', 'ながい つきあいだ。ありがとう', 'おちつくね。ずっと こうしていたい'],
+    bath: ['ふぅ…ひとっぷろ あびると、いきかえるよ', 'あわの かんむりも、にあうだろう？', 'いい ゆだ。ごくじょう だね'],
+    walk: ['ゆっくり いこう。いそぐ たびじゃない', 'ここから みえる けしきは、かくべつだね', 'いろんな ところへ いったね、ふたりで'],
+    idle: ['もうすぐ、だいじな ひが くるね', 'ここまで きたな…ありがとう、リン', 'ふふ、なにか いいことが ありそうだ', 'あしたも きょうみたいに たのしいと いいね'],
+    hungry: ['おなかが なっている。しずかに してくれ…ぐぅ', 'そろそろ ごはんを たのめるかな'],
+    dirty: ['すこし くたびれた かお かな。おふろ たのむよ', 'さっぱり したいね'],
+    bored: ['たまには さんぽも いいね', 'たいくつ…というより、さびしい かな'],
+    full: ['もう じゅうぶんだ。ありがとう', 'まんぷく。しあわせとは こういう ことだね'],
+    tap: ['おや、よんだかい？', 'ふふ、そこは ひかえめに たのむよ', 'なんだい、リン'],
+    greet: { morning: 'おはよう、リン。いい あさだ', day: 'やあ、リン。まっていたよ', evening: 'おかえり。いっぱい はなそうか', night: 'こんばんは、リン。ゆっくり しよう' },
+    eve: ['もうすぐ 0じ…38さいの ぼくに あえるね', 'ねる まえに ひとこと。いつも ありがとう']
+  }
+];
+const WALK_EV = [
+  { k: 'butterfly', m: 'ちょうちょだ！ひらひら きれいだね', d: ['ちょうちょ！まって〜！', 'わあ、ひらひら…！', 'つかまえ…られない！', 'きれいだね、ふふ', 'きれいな はねだね']},
+  { k: 'flower', m: 'みて、おはなが さいてるよ', d: ['いいにおい〜！', 'ぼくに くれるの？', 'おっ、きれいじゃん', 'リンに にあいそうだ', 'ひとつ つんで かえろうか']},
+  { k: 'rainbow', m: 'あっ、にじ！', d: ['にじだ！すごーい！', 'にじだ！すっげぇ！', 'にじだ！すごーい！', 'いい ことが ありそうだね', 'にじか…いい ひだ']}
+];
+
+/* ================= 描画 ================= */
+const scene = $('scene'), fxl = $('fx');
+let mode = G.start == null ? 'egg' : 'play';
+let scn = 'room', pose = 'idle', mpose = 'idle', fface = null, mface = 'normal', busy = false, hatching = false, eggTaps = 0, lastKey = '', lastM = '', lastStage = -1, lastIdle = Date.now(), hatDay = false;
+
+$('L-room').innerHTML = roomSVG; $('L-bath').innerHTML = bathSVG; $('L-bathfg').innerHTML = bathFgSVG; $('L-park').innerHTML = parkHTML;
+
+function setScene(s) {
+  scn = s;
+  for (const k of ['room', 'bath', 'park']) $('L-' + k).classList.toggle('on', k === s);
+  $('L-bathfg').classList.toggle('on', s === 'bath');
+  scene.classList.remove('s-room', 's-bath', 's-walk'); scene.classList.add(s === 'park' ? 's-walk' : 's-' + s);
+}
+setScene('room');
+
+const EGG_SVG = n => `<svg viewBox="0 0 200 250" aria-hidden="true"><defs>
+<radialGradient id="egG" cx=".35" cy=".28" r=".85"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#FFF1D2"/><stop offset="1" stop-color="#F1CF98"/></radialGradient></defs>
+<ellipse cx="100" cy="236" rx="62" ry="9" fill="#2B3550" opacity=".17"/>
+<g class="egg-wrap"><path d="M100 14C150 14 180 90 180 150 180 202 146 232 100 232 54 232 20 202 20 150 20 90 50 14 100 14Z" fill="url(#egG)" stroke="#E5C38A" stroke-width="3"/>
+<g opacity=".95"><circle cx="64" cy="156" r="13" fill="#8FE3CC"/><circle cx="132" cy="122" r="10" fill="#FFB3CB"/><circle cx="118" cy="184" r="15" fill="#8FE3CC"/><circle cx="76" cy="100" r="8" fill="#FFD34D"/><circle cx="150" cy="168" r="8" fill="#FFB3CB"/></g>
+<ellipse cx="68" cy="68" rx="14" ry="26" fill="#fff" opacity=".6" transform="rotate(24 68 68)"/>
+<g fill="none" stroke="#7A5B3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+${n >= 1 ? '<path d="M100 18L92 42L106 56L96 78"/>' : ''}${n >= 2 ? '<path d="M96 78L74 92L82 112"/>' : ''}${n >= 3 ? '<path d="M106 56L130 70L122 94L142 108"/>' : ''}${n >= 4 ? '<path d="M82 112L60 126L72 146M122 94L112 122L130 140"/>' : ''}</g></g></svg>`;
+
+function draw() {
+  const p = progress();
+  let key, markup, mk;
+  if (mode === 'egg') {
+    key = 'egg' + Math.min(eggTaps, 4) + hatching;
+    markup = () => EGG_SVG(Math.min(eggTaps, 4));
+  } else {
+    const a = ageOf(p), st = stageOf(a);
+    const face = fface || moodFace();
+    const hat = hatDay;
+    key = [st, face, hat, pose].join('|');
+    markup = () => dragonSVG({ stage: st, face, hat, pose });
+  }
+  if (key !== lastKey) { lastKey = key; $('dragonArt').innerHTML = markup(); }
+  mk = mpose + '|' + mface;
+  if (mk !== lastM) { lastM = mk; $('monkeyArt').innerHTML = monkeySVG({ pose: mpose, face: mface }); }
+}
+function moodFace() {
+  if (G.sat < 28 || G.cln < 25 || G.fun < 25) return 'sad';
+  if (G.sat > 70 && G.cln > 70 && G.fun > 70) return 'happy';
+  return 'normal';
+}
+const fmt = n => String(n).padStart(2, '0');
+function renderHUD() {
+  const p = progress(), a = ageOf(p), st = stageOf(a);
+  scene.classList.toggle('is-egg', mode === 'egg');
+  scene.style.setProperty('--dw', (mode === 'egg' ? 34 : 38 + 40 * p) + '%');
+  $('app').style.setProperty('--dc', STAGES[st].body[1]);
+  document.documentElement.style.setProperty('--dc', STAGES[st].body[1]);
+  $('ageN').textContent = mode === 'egg' ? 0 : a;
+  $('stg').textContent = mode === 'egg' ? 'たまご' : STAGES[st].name;
+  $('love').textContent = mode === 'egg' ? '' : '♥ ' + Math.floor(G.love);
+  $('fill').style.width = (mode === 'egg' ? 0 : p * 100) + '%';
+  $('hatchDay').textContent = G.start == null ? '' : (jstDate(G.start).getUTCMonth() + 1) + '/' + jstDate(G.start).getUTCDate() + ' たんじょう';
+  document.querySelectorAll('.tick').forEach(e => e.remove());
+  [3, 10, 20, 32].forEach(v => { const t = document.createElement('i'); t.className = 'tick'; t.style.left = (v / 38 * 100) + '%'; $('track').appendChild(t); });
+  const left = TARGET - now();
+  if (left > 0) {
+    const d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), m = Math.floor(left % 36e5 / 6e4), s = Math.floor(left % 6e4 / 1e3);
+    $('cdLabel').textContent = '38歳まで あと';
+    $('cd').textContent = (d > 0 ? d + '日 ' : '') + fmt(h) + ':' + fmt(m) + ':' + fmt(s);
+  } else { $('cdLabel').textContent = 'お誕生日 おめでとう'; $('cd').textContent = '38歳'; }
+  $('actions').hidden = $('stats').hidden = mode === 'egg';
+  $('eggHelp').hidden = mode !== 'egg';
+  $('eggCount').textContent = Math.min(eggTaps, 5) + ' / 5';
+  $('msgWrap').hidden = !(mode === 'play' && now() >= TARGET);
+  hatDay = now() >= TARGET && now() < TARGET + 864e5;
+  if (mode === 'play') {
+    for (const [id, v] of [['sat', G.sat], ['cln', G.cln], ['fun', G.fun]]) {
+      const b = $('b-' + id); b.firstElementChild.style.width = clamp(v, 0, 100) + '%'; b.classList.toggle('low', v < 30);
+    }
+    const n = G.meals[dayKey(now())] || 0;
+    [...$('dots').children].forEach((e, i) => e.classList.toggle('on', i < n));
+    $('streak').textContent = G.streak > 1 ? 'れんぞく ' + G.streak + '日' : '';
+  }
+  if (st !== lastStage) { lastStage = st; lastKey = ''; }
+  draw();
+}
+
+/* ================= しゃべる ================= */
+function say(m, d) {
+  const rm = $('tM'), rd = $('tD');
+  rm.hidden = !m; rd.hidden = !d;
+  if (m) rm.querySelector('.line').textContent = m;
+  if (d) rd.querySelector('.line').textContent = d;
+  for (const r of [rm, rd]) { r.classList.remove('pop'); void r.offsetWidth; r.classList.add('pop'); }
+  lastIdle = Date.now();
+}
+const curStage = () => stageOf(ageOf(progress()));
+
+/* ================= エフェクト ================= */
+function relPos(el, fx, fy) {
+  const s = scene.getBoundingClientRect(), r = el.getBoundingClientRect();
+  return { x: r.left - s.left + r.width * fx, y: r.top - s.top + r.height * fy };
+}
+function fx(html, x, y, cls, dx, life) {
+  const e = document.createElement('div');
+  e.className = 'fx ' + (cls || ''); e.innerHTML = html;
+  e.style.left = x + 'px'; e.style.top = y + 'px'; if (dx != null) e.style.setProperty('--dx', dx + 'px');
+  fxl.appendChild(e); setTimeout(() => e.remove(), life || 2500); return e;
+}
+const headPos = () => relPos($('dragon'), .5, .3);
+function hearts(n) { const p = headPos(); for (let i = 0; i < n; i++) setTimeout(() => fx(HEART, p.x + (Math.random() - .5) * 90, p.y + 10, 'heart', (Math.random() - .5) * 50), i * 190); }
+function stars(n) { const p = relPos($('dragon'), .5, .5), w = $('dragon').offsetWidth; for (let i = 0; i < n; i++) setTimeout(() => fx(STAR, p.x + (Math.random() - .5) * w, p.y + (Math.random() - .5) * w * .8, 'star', (Math.random() - .5) * 40), i * 120); }
+function bubbles(n) { const p = relPos($('dragon'), .5, .55), w = $('dragon').offsetWidth; for (let i = 0; i < n; i++) setTimeout(() => fx(BUB(14 + Math.random() * 22), p.x + (Math.random() - .5) * w * .9, p.y + Math.random() * 30, 'bub', (Math.random() - .5) * 40, 2300), i * 150); }
+function flyFood() {
+  const from = relPos($('monkey'), .86, .72), to = relPos($('dragon'), .5, .56);
+  const e = fx(pick(FOODS), from.x, from.y, '', null, 1400);
+  e.animate([
+    { left: from.x + 'px', top: from.y + 'px', transform: 'translate(-50%,-50%) scale(1) rotate(-15deg)', opacity: 1 },
+    { left: (from.x + to.x) / 2 + 'px', top: Math.min(from.y, to.y) - 40 + 'px', transform: 'translate(-50%,-50%) scale(1.1) rotate(10deg)', opacity: 1, offset: .55 },
+    { left: to.x + 'px', top: to.y + 'px', transform: 'translate(-50%,-50%) scale(.2) rotate(30deg)', opacity: 0 }
+  ], { duration: 1000, easing: 'ease-in', fill: 'forwards' });
+}
+function walkEvent() {
+  const ev = pick(WALK_EV), sw = scene.clientWidth, sh = scene.clientHeight;
+  if (ev.k === 'butterfly') { const e = fx(BUTTERFLY, -30, sh * .35, '', null, 3800); e.animate([{ left: '-8%', top: '42%' }, { left: '40%', top: '26%' }, { left: '70%', top: '38%' }, { left: '112%', top: '22%' }], { duration: 3400, easing: 'ease-in-out', fill: 'forwards' }); }
+  if (ev.k === 'flower') { fx(FLOWER, sw * .5, sh * .74, 'star', 0, 2600); }
+  if (ev.k === 'rainbow') { const e = fx(RAINBOW, sw * .38, sh * .2, '', null, 3600); e.animate([{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 3400 }); }
+  const dl = DR[curStage()];
+  const i = WALK_EV.indexOf(ev);
+  setTimeout(() => say(ev.m, ev.d[Math.min(curStage(), ev.d.length - 1)]), 1500);
+}
+
+/* ================= おせわ ================= */
+function lock(ms, fn) { busy = true; document.querySelectorAll('.btn').forEach(b => b.disabled = true); setTimeout(() => { fn && fn(); busy = false; document.querySelectorAll('.btn').forEach(b => b.disabled = false); }, ms); }
+function back() { setScene('room'); pose = 'idle'; mpose = 'idle'; mface = 'normal'; fface = null; draw(); renderHUD(); }
+function react(kind) {
+  const st = curStage(), L = DR[st];
+  if (kind === 'feed') {
+    if (G.sat >= 92) { mface = 'normal'; fface = 'oh'; draw(); say(pick(MK.full), pick(L.full)); return lock(1800, back); }
+    const day = dayKey(now()), n = (G.meals[day] || 0) + 1;
+    G.meals = { [day]: n }; G.sat = Math.min(100, G.sat + 38); G.love += 3;
+    pose = 'feed'; mpose = 'feed'; mface = 'happy'; fface = 'eat'; draw(); flyFood();
+    let m = pick(MK.feed), d = pick(L.feed);
+    if (n === 3) {
+      G.streak = G.lastFull === prevDay(day) ? G.streak + 1 : (G.lastFull === day ? G.streak : 1); G.lastFull = day;
+      m = pick(MK.allMeals); setTimeout(() => stars(8), 1100);
+    }
+    setTimeout(() => say(m, d), 900);
+    lock(3200, () => { fface = 'happy'; hearts(2); setTimeout(back, 700); });
+  }
+  if (kind === 'pet') {
+    G.fun = Math.min(100, G.fun + 16); G.love += 4;
+    pose = 'pet'; mpose = 'pet'; mface = 'happy'; fface = 'bliss'; draw(); hearts(7);
+    say(pick(MK.pet), pick(L.pet)); lock(3000, back);
+  }
+  if (kind === 'bath') {
+    setScene('bath'); G.cln = 100; G.fun = Math.max(0, G.fun - 4); G.love += 3;
+    pose = 'bath'; mpose = 'bath'; mface = 'happy'; fface = 'happy'; draw(); bubbles(16); setTimeout(() => bubbles(12), 1500);
+    say(pick(MK.bath), pick(L.bath)); lock(4000, back);
+  }
+  if (kind === 'walk') {
+    if (G.sat < 18) { fface = 'sad'; draw(); say(pick(MK.tired), pick(L.hungry)); return lock(1800, back); }
+    setScene('park'); G.fun = Math.min(100, G.fun + 38); G.sat = Math.max(8, G.sat - 14); G.cln = Math.max(8, G.cln - 12); G.love += 5;
+    pose = 'walk'; mpose = 'walk'; mface = 'happy'; fface = 'happy'; draw();
+    say(pick(MK.walk), pick(L.walk)); setTimeout(walkEvent, 400); lock(6200, back);
+  }
+  save(); renderHUD();
+}
+for (const k of ['feed', 'pet', 'bath', 'walk']) $('a-' + k).addEventListener('click', () => { if (!busy && mode === 'play' && !hatching) { decay(); react(k); } });
+
+function tapDragon() {
+  if (mode === 'egg') return tapEgg();
+  if (busy) return;
+  const st = curStage(), d = $('dragon');
+  d.classList.remove('bounce'); void d.offsetWidth; d.classList.add('bounce');
+  hearts(1); G.love += .5; say(null, pick(DR[st].tap)); save();
+}
+function tapEgg() {
+  if (hatching) return;
+  eggTaps++;
+  const d = $('dragon'); d.classList.remove('wobble'); void d.offsetWidth; d.classList.add('wobble');
+  hearts(1);
+  const left = 5 - eggTaps;
+  const lines = ['…コトッ', '…コト…コトコト', 'なにか うごいた！', 'ひびが はいってきた…！'];
+  if (left > 0) { say(left === 4 ? 'あたたかく して あげてね' : 'もうすこし…！', lines[Math.min(eggTaps - 1, 3)]); renderHUD(); }
+  else hatch();
+}
+function hatch() {
+  hatching = true; renderHUD(); say('わっ…うまれる！', 'ぴしっ…ぴしぴしっ…！');
+  const d = $('dragon'); d.classList.add('wobble');
+  setTimeout(() => {
+    const p = relPos(d, .5, .6);
+    for (let i = 0; i < 9; i++) { const s = document.createElement('div'); s.className = 'shell'; s.style.left = p.x + 'px'; s.style.top = p.y + 'px'; fxl.appendChild(s);
+      s.animate([{ transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 }, { transform: `translate(${(i - 4) * 28}px,${-90 - Math.random() * 60}px) rotate(${(i - 4) * 90}deg)`, opacity: 1, offset: .5 }, { transform: `translate(${(i - 4) * 36}px,60px) rotate(${(i - 4) * 160}deg)`, opacity: 0 }], { duration: 1100, easing: 'ease-out', fill: 'forwards' }); setTimeout(() => s.remove(), 1200); }
+    G.start = Date.now(); G.ts = Date.now(); G.sat = 55; G.cln = 90; G.fun = 70; G.love = 0; G.meals = {}; G.streak = 0; G.lastFull = ''; G.bd = false; save();
+    mode = 'play'; hatching = false; eggTaps = 0; fface = 'happy'; mface = 'happy'; lastKey = ''; renderHUD(); stars(10); hearts(4);
+    const dd = $('dragon'); dd.classList.remove('wobble'); dd.classList.add('bounce');
+    say('うまれたよ！ようこそ、祐！', 'ぴぃ…？ぴぃぴぃ！（はじめまして、リン！）');
+    setTimeout(() => { fface = null; mface = 'normal'; renderHUD(); }, 3500);
+  }, 900);
+}
+$('dragon').addEventListener('click', tapDragon);
+$('dragon').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapDragon(); } });
+
+/* ================= 誕生日 ================= */
+let confettiOn = false;
+function startConfetti() {
+  const c = $('confetti'), x = c.getContext('2d'); confettiOn = true;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  function size() { c.width = innerWidth * dpr; c.height = innerHeight * dpr; }
+  size(); addEventListener('resize', size);
+  const cols = ['#FF6F9C', '#FFD34D', '#6FD6DD', '#8FE3CC', '#9585EA', '#FF8466', '#68B4F0'];
+  const ps = []; const born = performance.now();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function spawn(n) { for (let i = 0; i < n; i++) ps.push({ x: Math.random() * c.width, y: -20 * dpr, vx: (Math.random() - .5) * 2.4 * dpr, vy: (1.5 + Math.random() * 2.6) * dpr, s: (5 + Math.random() * 7) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: pick(cols), sh: Math.random() < .3 }); }
+  spawn(reduce ? 20 : 90);
+  (function loop(t) {
+    if (!confettiOn) { x.clearRect(0, 0, c.width, c.height); removeEventListener('resize', size); return; }
+    x.clearRect(0, 0, c.width, c.height);
+    if (!reduce && t - born < 9000 && Math.random() < .5) spawn(3);
+    for (let i = ps.length - 1; i >= 0; i--) { const q = ps[i]; q.x += q.vx + Math.sin(q.r) * .6 * dpr; q.y += q.vy; q.r += q.vr; if (q.y > c.height + 30) { ps.splice(i, 1); continue; }
+      x.save(); x.translate(q.x, q.y); x.rotate(q.r); x.fillStyle = q.c; if (q.sh) { x.beginPath(); x.arc(0, 0, q.s / 2, 0, 7); x.fill(); } else x.fillRect(-q.s / 2, -q.s / 4, q.s, q.s / 2); x.restore(); }
+    requestAnimationFrame(loop);
+  })(performance.now());
+}
+const CAKE = `<svg viewBox="0 0 160 130" class="cake" aria-hidden="true"><ellipse cx="80" cy="116" rx="70" ry="10" fill="#fff" stroke="#E6D6C8" stroke-width="2"/><rect x="22" y="70" width="116" height="44" rx="12" fill="#FFE1A8" stroke="#E9BF74" stroke-width="2"/><path d="M22 82Q22 62 42 62H118Q138 62 138 82Q130 96 118 84Q108 98 96 84Q84 98 72 84Q60 98 48 84Q36 96 22 82Z" fill="#FFB3CB" stroke="#E5779C" stroke-width="2"/><circle cx="50" cy="60" r="7" fill="#FF5A5F"/><circle cx="110" cy="60" r="7" fill="#FF5A5F"/>
+<g font-family="Mochiy Pop One,sans-serif" font-size="30" text-anchor="middle"><rect x="56" y="28" width="20" height="36" rx="6" fill="#8FE3CC"/><rect x="84" y="28" width="20" height="36" rx="6" fill="#68B4F0"/><text x="66" y="56" fill="#fff">3</text><text x="94" y="56" fill="#fff">8</text></g>
+<path class="flame" d="M66 12C72 20 72 26 66 28 60 26 60 20 66 12Z" fill="#FFB02E"/><path class="flame" d="M94 12C100 20 100 26 94 28 88 26 88 20 94 12Z" fill="#FFB02E"/></svg>`;
+function showBirthday(persist) {
+  $('bdArt').innerHTML = `<div class="dr">${dragonSVG({ stage: 4, face: 'happy', hat: true, pose: 'cheer', uid: 'B' })}</div><div class="mk">${monkeySVG({ pose: 'cheer', face: 'happy', uid: 'B' })}</div>${CAKE}`;
+  if (SENDER_NOTE) { $('bdNote').hidden = false; $('bdNote').textContent = SENDER_NOTE; }
+  $('bday').hidden = false; $('bday').scrollTop = 0; startConfetti(); $('bdClose').focus({ preventScroll: true });
+  if (persist) { G.bd = true; save(); }
+}
+$('bdClose').addEventListener('click', () => { $('bday').hidden = true; confettiOn = false; say('ありがとう、リン！', 'ぼく、38さい！ これからも よろしくね！'); });
+$('msgBtn').addEventListener('click', () => showBirthday(false));
+
+/* ================= プレビュー(作者用) ================= */
+let taps = 0, tapT = 0;
+$('who').addEventListener('click', () => { const t = Date.now(); taps = t - tapT < 1500 ? taps + 1 : 1; tapT = t; if (taps >= 5) { taps = 0; $('dev').hidden = false; } });
+function setSimP(v) {
+  if (G.start == null) return;
+  sim = G.start + v * (TARGET - G.start); if (v >= 1) sim = TARGET;
+  $('pvBanner').hidden = false; $('simOut').textContent = ageOf(v) + '歳'; tick(true);
+}
+$('sim').addEventListener('input', e => { if (G.start == null) { $('simOut').textContent = 'Hãy ấp trứng trước'; return; } const v = e.target.value / 1000; setSimP(v); });
+$('devNow').addEventListener('click', () => { sim = null; $('pvBanner').hidden = true; tick(true); });
+$('devBd').addEventListener('click', () => { if (G.start == null) return; setSimP(1); $('sim').value = 1000; showBirthday(false); });
+$('devClose').addEventListener('click', () => { $('dev').hidden = true; });
+let rs = 0;
+$('devReset').addEventListener('click', e => { if (!rs) { rs = 1; e.target.textContent = 'Bấm lần nữa để xóa hết'; setTimeout(() => { rs = 0; e.target.textContent = 'Chơi lại từ quả trứng'; }, 3000); return; }
+  G = fresh(); save(); sim = null; mode = 'egg'; eggTaps = 0; $('pvBanner').hidden = true; $('dev').hidden = true; lastKey = ''; setScene('room'); pose = 'idle'; fface = null; renderHUD(); say('たまごを タップして あたためてね', '…コト…'); });
+window.__yu = { setSimP, G: () => G, showBirthday };
+
+/* ================= ループ ================= */
+let bdShown = false;
+function tick(force) {
+  if (mode === 'play') {
+    if (now() >= TARGET && !bdShown && $('bday').hidden && (sim != null ? false : !G.bd)) { bdShown = true; showBirthday(true); }
+    if (sim == null) { const old = G.sat; decay(); }
+  }
+  renderHUD();
+}
+setInterval(() => tick(), 1000);
+setInterval(() => { if (mode === 'play' && !busy && Date.now() - lastIdle > 14000) {
+  const st = curStage(), L = DR[st], left = TARGET - now();
+  let pool = L.idle;
+  if (G.sat < 35) pool = L.hungry; else if (G.cln < 30) pool = L.dirty; else if (G.fun < 30) pool = L.bored;
+  else if (left > 0 && left < 864e5 && Math.random() < .5) pool = L.eve;
+  say(null, pick(pool)); } }, 4000);
+setInterval(save, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); } });
+
+/* ================= はじまり ================= */
+function start() {
+  if (mode === 'play') {
+    decay(); save();
+    if (now() >= TARGET) { renderHUD(); if (!G.bd) { bdShown = true; showBirthday(true); } else say(MK.greet[slotOf(now())], DR[4].greet[slotOf(now())]); return; }
+    const st = curStage(), slot = slotOf(now());
+    renderHUD();
+    let d = DR[st].greet[slot];
+    if (G.sat < 35) d = pick(DR[st].hungry); else if (G.cln < 30) d = pick(DR[st].dirty);
+    say(MK.greet[slot], d);
+  } else {
+    if (now() >= TARGET) { G.start = TARGET - 1; mode = 'play'; save(); return start(); }
+    renderHUD(); say('たまごが ゆれているよ…', '…コト…コト…');
+  }
+}
+start();
+})();
+</script>
+
+</body>
+</html>
